@@ -1,237 +1,302 @@
-# WebdriverIO Model Context Protocol (MCP) Server
 
-A production-grade server that enables AI agents to interact with web browsers through a structured API. This server acts as the "eyes and hands" for AI agents on the web, providing a simplified, model-readable representation of web pages and executing actions based on AI decisions.
+# WebdriverIO MCP Server
 
----
+[![npm version](https://badge.fury.io/js/wdio-mcp-server.svg)](https://badge.fury.io/js/wdio-mcp-server)
 
-## 🚀 Features
+A Model Context Protocol (MCP) server for [WebdriverIO](https://webdriver.io/). This server acts as a bridge, allowing Large Language Models (LLMs) and AI agents to control a web browser. It provides a structured, model-readable representation of web pages and executes actions based on AI-driven decisions.
 
-- **Session Management**: Stateful browser sessions with automatic cleanup
-- **Context Extraction**: Structured representation of web page interactive elements with robust selectors
-- **Action Execution**: Supports all major WebdriverIO actions (see below)
-- **Screenshot Support**: Take screenshots of the page or elements
-- **Headless/Non-Headless**: Easily switch browser mode via API
-- **Production Ready**: Comprehensive error handling, logging, and security
-- **RESTful API**: Clean, documented endpoints
-- **Comprehensive Testing**: Unit and integration tests with high coverage
+This project is designed to be a robust and easy-to-use tool for the AI agent development community.
 
----
+### Key Features
 
-## 🤖 How to Use with AI Agents
+-   **LLM-First Design**: Built to be the "eyes and hands" for AI agents, providing structured context and a clear action framework.
+-   **Stateful Session Management**: Manages browser sessions with configurable timeouts and automatic cleanup.
+-   **Robust Action Execution**: Leverages the power and stability of WebdriverIO to support a wide range of browser actions.
+-   **Flexible Configuration**: Configure the server via environment variables for easy deployment.
+-   **Headless & Headed Support**: Easily switch between headless and headed browser modes via configuration.
 
-### What is MCP for AI?
-The MCP server is designed to be the "toolformer" or "web tool interface" for AI agents (LLMs, RAG, toolformer, etc.). The typical loop is:
-1. **AI requests context** (via `/session/start` or `/session/{id}/act`)
-2. **AI receives a structured, simplified JSON context** (all interactive elements, robust selectors, etc.)
-3. **AI decides on an action** (e.g., click, setValue, screenshot, etc.)
-4. **AI sends action to MCP** (via `/session/{id}/act`)
-5. **MCP executes and returns updated context/result**
+## Getting Started
 
-**The server is AI-agnostic:** You can use it with OpenAI, HuggingFace, LangChain, custom LLMs, or any agent framework. The agent simply needs to:
-- Parse the context JSON
-- Decide on an action (using the elementId and action schema)
-- POST the action to the server
-- Repeat until done
+The server is designed to be run by an MCP client and you can use this standard config for most of the tools:
 
-**Example AI Loop:**
-```python
-# Pseudocode for an LLM agent
-context = requests.post('/session/start', json={...}).json()['context']
-while not done:
-    action = llm_decide_action(context)  # LLM picks action
-    result = requests.post(f'/session/{session_id}/act', json=action).json()
-    context = result['context']
-    # Optionally use result['result'] for getText, screenshot, etc.
-```
 
----
-
-## ⚙️ Supported Actions (with Examples)
-
-The `/session/{sessionId}/act` endpoint supports **all major WebdriverIO actions**. Here are the most popular:
-
-| Action                | Description                                 | Example Request Body |
-|-----------------------|---------------------------------------------|---------------------|
-| `click`               | Click an element                            | `{ "action": "click", "elementId": "button_submit" }` |
-| `setValue`            | Set value in input/textarea/select          | `{ "action": "setValue", "elementId": "input_email", "value": "test@example.com" }` |
-| `getText`             | Get text content of an element              | `{ "action": "getText", "elementId": "label_result" }` |
-| `clearValue`          | Clear value of an input/textarea            | `{ "action": "clearValue", "elementId": "input_email" }` |
-| `selectByVisibleText` | Select option by visible text               | `{ "action": "selectByVisibleText", "elementId": "select_country", "text": "India" }` |
-| `selectByIndex`       | Select option by index                      | `{ "action": "selectByIndex", "elementId": "select_country", "index": 2 }` |
-| `selectByAttribute`   | Select option by attribute                  | `{ "action": "selectByAttribute", "elementId": "select_country", "attribute": "value", "value": "IN" }` |
-| `keys`                | Send keyboard keys to the browser           | `{ "action": "keys", "value": "Enter" }` |
-| `scrollIntoView`      | Scroll element into view                    | `{ "action": "scrollIntoView", "elementId": "footer" }` |
-| `screenshot`          | Take screenshot (page or element)           | `{ "action": "screenshot" }` or `{ "action": "screenshot", "elementId": "logo" }` |
-| `navigate`            | Navigate to a new URL                       | `{ "action": "navigate", "url": "https://example.com" }` |
-| `getAttribute`        | Get attribute value of an element           | `{ "action": "getAttribute", "elementId": "input_email", "attribute": "placeholder" }` |
-| `isDisplayed`         | Check if element is displayed               | `{ "action": "isDisplayed", "elementId": "input_email" }` |
-| `isEnabled`           | Check if element is enabled                 | `{ "action": "isEnabled", "elementId": "input_email" }` |
-| `isSelected`          | Check if element is selected                | `{ "action": "isSelected", "elementId": "checkbox_terms" }` |
-| `waitForDisplayed`    | Wait for element to be displayed            | `{ "action": "waitForDisplayed", "elementId": "modal", "timeout": 10000 }` |
-| `waitForEnabled`      | Wait for element to be enabled              | `{ "action": "waitForEnabled", "elementId": "input_email", "timeout": 5000 }` |
-| `waitForExist`        | Wait for element to exist                   | `{ "action": "waitForExist", "elementId": "input_email", "timeout": 5000 }` |
-| `customScript`        | Run custom JS in browser context            | `{ "action": "customScript", "script": "return document.title;" }` |
-
-**All actions return a `message` and, if applicable, a `result` (e.g., screenshot, text, attribute, etc.).**
-
----
-
-## 🏷️ Robust Selectors & Element IDs
-
-- **Element IDs**: Now generated using id, name, data-testid, data-qa, or fallback to tag+index. No more NaN or unreliable selectors.
-- **Selector Example**: `button_submit`, `input_email`, `select_country`, `button_idx_2` (for 2nd button if no id/name)
-- **Returned in context**: Each element in `interactiveElements` includes `id` and `selector`.
-- **Use the `elementId` in your action requests.**
-
----
-
-## 🖼️ Screenshot Support
-
-- **Take full page screenshot:**
-  ```json
-  { "action": "screenshot" }
-  ```
-- **Take element screenshot:**
-  ```json
-  { "action": "screenshot", "elementId": "logo" }
-  ```
-- **Response:**
-  ```json
-  { "message": "Screenshot taken.", "screenshot": "<base64>" }
-  ```
-
----
-
-## 🖥️ Headless & Non-Headless Mode
-
-- **Default:** Headless mode (`browserOptions.headless: true`)
-- **To launch in non-headless mode:**
-  ```json
-  {
-    "url": "https://example.com",
-    "browserOptions": { "headless": false }
+```json
+{
+  "mcpServers": {
+    "webdriverio": {
+      "command": "npx",
+      "args": [
+        "wdio-mcp-server@latest"
+      ]
+    }
   }
-  ```
-- **You can set this in the `/session/start` request.**
-
----
-
-## 🧑‍💻 Usage Examples
-
-### Start a Session (Headless or Non-Headless)
-```json
-POST /session/start
-{
-  "url": "https://httpbin.org/forms/post",
-  "browserOptions": { "headless": false }
 }
 ```
 
-### Click a Button
+
+
+ For tool specific instructions, select your client below for installation instructions.
+
+<details>
+<summary><strong>Cursor</strong></summary>
+
+#### Click the button to install:
+
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=webdriverio&config=eyJjb21tYW5kIjoibnB4IHdkaW8tbWNwLXNlcnZlckBsYXRlc3QifQ==)
+
+#### Or install manually:
+
+Go to `Cursor Settings` -> `MCP` -> `Add new MCP Server`. Name it `webdriverio` (or to your liking), use `command` type with the command `npx wdio-mcp-server@latest`.
+
+</details>
+
+<details>
+<summary><strong>VS Code (with compatible agent)</strong></summary>
+
+#### Click the button to install:
+
+[<img src="https://img.shields.io/badge/VS_Code-VS_Code?style=flat-square&label=Install%20Server&color=0098FF" alt="Install in VS Code">](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%7B%22name%22%3A%22webdriverio%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22wdio-mcp-server%40latest%22%5D%7D)
+
+#### Or install manually:
+
+1.  Open your `settings.json` file.
+2.  Add or merge the following configuration:
+
 ```json
-POST /session/{sessionId}/act
 {
-  "action": "click",
-  "elementId": "button_submit"
+  "mcp.servers": {
+    "webdriverio": {
+      "command": "npx",
+      "args": [
+        "wdio-mcp-server@latest"
+      ]
+    }
+  }
 }
 ```
 
-### Set Value in Input
+</details>
+
+<details>
+<summary><strong>Other Clients (Gemini CLI, etc.)</strong></summary>
+
+Most MCP-compatible clients will ask for a command to run the server. Use `npx wdio-mcp-server@latest` when prompted.
+
+</details>
+
+## How the AI Interaction Loop Works
+
+The MCP server is the web interaction tool for an AI agent. The agent and server communicate in a continuous loop until a task is complete.
+
+1.  **Agent Receives a Goal**: The process starts with a high-level objective, e.g., "Book a flight from SFO to LAX for tomorrow."
+2.  **Agent Starts a Session**: The agent calls the `/session/start` endpoint with a starting URL.
+3.  **Server Provides Context**: The server launches a browser, navigates to the URL, and returns a structured JSON object representing the page's interactive elements (buttons, inputs, links), each with a stable `elementId` and a text description.
+4.  **Agent Decides Next Action**: The agent's underlying LLM analyzes the goal, the current page context, and its list of available actions. It then decides on the most logical next step (e.g., "click the 'Flights' tab").
+5.  **Agent Executes Action**: The agent calls the `/session/{id}/act` endpoint with the chosen action and the `elementId` of the target element.
+6.  **Loop**: The server performs the action and returns the updated page context. The loop repeats from step 4 until the agent determines the goal is complete.
+
+### AI Agent Pseudo-code Example (JavaScript)
+
+This example illustrates the agent's decision-making process.
+
+```javascript
+// --- AI Agent's Thought Process (Pseudo-code) ---
+
+async function runAgent(goal) {
+    console.log(`AGENT: Starting new task with goal: \"${goal}\"`);
+    const { sessionId, context: initialContext } = await startSession("https://www.google.com");
+    let pageContext = initialContext;
+
+    for (let i = 0; i < 10; i++) { // Limit steps to prevent infinite loops
+        // 1. Agent uses its model to decide the next action based on the goal and current page context.
+        const { action, reasoning } = await decideNextAction(goal, pageContext);
+        console.log(`AGENT: Based on my goal, my next action is to '${action.action}'. Reasoning: ${reasoning}`);
+
+        if (action.action === 'finish') {
+            console.log("AGENT: I have determined that I have completed my goal.");
+            break;
+        }
+
+        // 2. Execute the chosen action and get the new page state.
+        const result = await performAction(sessionId, action);
+        pageContext = result.context; 
+        console.log("AGENT: Action executed. Observing new page state to decide next move.");
+    }
+
+    await endSession(sessionId);
+    console.log("AGENT: Session terminated.");
+}
+
+async function decideNextAction(goal, pageContext) {
+    // In a real scenario, this function makes a call to an LLM.
+    // The prompt includes the goal, the page's interactive elements, and available actions.
+    const prompt = `
+        User Goal: \"${goal}\"
+        Current Page Interactive Elements: ${JSON.stringify(pageContext.interactiveElements.map(e => ({ id: e.elementId, description: e.description, tag: e.tag })))}
+        Available Actions: [\"setValue\", \"click\", \"getText\", \"navigate\", \"finish\"]
+
+        Based on the user's goal and the current page, what is the single most logical next action to take?
+        Return a JSON object with \"reasoning\" and \"action\" keys.
+    `;
+
+    // --- MOCKED LLM RESPONSE for demonstration ---
+    const searchInput = pageContext.interactiveElements.find(e => e.tag === 'input' && e.description && e.description.toLowerCase().includes('search'));
+    if (searchInput && goal.includes("Search for")) {
+        const searchTerm = goal.match(/Search for '(.+)'/)[1];
+        return {
+            reasoning: `The user wants to search. I have found a search input with the description '${searchInput.description}'. I will type the search term into it.`,
+            action: {
+                action: "setValue",
+                elementId: searchInput.elementId,
+                value: searchTerm
+            }
+        };
+    }
+
+    // Default/Finish action
+    return {
+        reasoning: "I have completed the primary actions or cannot determine the next step. I will finish the task.",
+        action: { action: "finish" }
+    };
+}
+
+// Assume startSession, performAction, endSession are defined elsewhere.
+runAgent("Search for 'WebdriverIO MCP Server'");
+```
+
+## Standalone Server
+
+You can also run the server directly from the command line.
+
+```bash
+# Install the package
+npm install -g wdio-mcp-server
+
+# Run the server
+wdio-mcp-server
+```
+
+## Configuration
+
+The server can be configured in two ways: via a configuration file or using environment variables. Environment variables will always override settings in the configuration file.
+
+### Configuration File
+
+You can create a `wdio-mcp-config.json` file in your project root or specify a path to a config file using the `CONFIG_FILE` environment variable. This provides a centralized place for all your settings, which is especially useful for complex WebdriverIO capabilities.
+
+**Example `wdio-mcp-config.json`:**
 ```json
-POST /session/{sessionId}/act
 {
-  "action": "setValue",
-  "elementId": "input_email",
-  "value": "test@example.com"
+  "server": {
+    "port": 4000,
+    "host": "0.0.0.0",
+    "logLevel": "debug"
+  },
+  "session": {
+    "timeoutSeconds": 600,
+    "maxSessions": 10,
+    "headless": false
+  },
+  "webdriverio": {
+    "capabilities": {
+      "browserName": "chrome",
+      "goog:chromeOptions": {
+        "args": ["--disable-gpu", "--no-sandbox"]
+      }
+    }
+  }
 }
 ```
 
-### Take a Screenshot
-```json
-POST /session/{sessionId}/act
-{
-  "action": "screenshot"
-}
-```
+### Environment Variables
 
-### Get Text of an Element
-```json
-POST /session/{sessionId}/act
-{
-  "action": "getText",
-  "elementId": "label_result"
-}
-```
+| Variable                  | Description                                        | Default     | Corresponding Config Key |
+| ------------------------- | -------------------------------------------------- | ----------- | ------------------------ |
+| `PORT`                    | The port the server will listen on.                | `3000`      | `server.port`            |
+| `HOST`                    | The host the server will bind to.                  | `localhost` | `server.host`            |
+| `LOG_LEVEL`               | The logging level (e.g., `info`, `debug`, `warn`). | `info`      | `server.logLevel`        |
+| `SESSION_TIMEOUT_SECONDS` | Timeout in seconds for inactive sessions.          | `300`       | `session.timeoutSeconds` |
+| `MAX_SESSIONS`            | Maximum number of concurrent browser sessions.     | `5`         | `session.maxSessions`    |
+| `HEADLESS`                | Run browser in headless mode (`true` or `false`).  | `true`      | `session.headless`       |
+| `CONFIG_FILE`             | Path to a custom configuration file.               | `null`      | N/A                      |
 
-### Use with AI Agent (Python Example)
-```python
-import requests
+**Note:** Currently, only Google Chrome is supported.
 
-# Start session
-resp = requests.post('http://localhost:3000/session/start', json={
-    'url': 'https://httpbin.org/forms/post',
-    'browserOptions': {'headless': True}
-})
-session_id = resp.json()['sessionId']
+## Supported Actions
 
-# Get context
-context = resp.json()['context']
+The `/session/{sessionId}/act` endpoint supports a wide range of WebdriverIO actions.
 
-# AI loop (pseudo)
-while True:
-    action = ai_decide_action(context)  # Your LLM/agent logic
-    result = requests.post(f'http://localhost:3000/session/{session_id}/act', json=action).json()
-    print(result['message'])
-    context = result['context']
-    if done: break
+<details>
+<summary><strong>Core Automation Actions</strong></summary>
 
-# Terminate session
-requests.delete(f'http://localhost:3000/session/{session_id}')
-```
+-   **`click`**: Clicks an element.
+    -   **Params**: `elementId`
+-   **`setValue`**: Sets the value of an input, textarea, or select element.
+    -   **Params**: `elementId`, `value`
+-   **`getText`**: Gets the text content of an element.
+    -   **Params**: `elementId`
+-   **`clearValue`**: Clears the value of an input or textarea.
+    -   **Params**: `elementId`
+-   **`keys`**: Sends a sequence of keyboard keys to the browser.
+    -   **Params**: `value` (e.g., "Enter")
+-   **`scrollIntoView`**: Scrolls an element into the viewport.
+    -   **Params**: `elementId`
+-   **`getAttribute`**: Gets the value of an element's attribute.
+    -   **Params**: `elementId`, `attribute`
 
----
+</details>
 
-## 🛡️ Debugging & Error Handling
-- All API responses include a `message` for clarity.
-- If an action fails, you get a descriptive error message and details.
-- Use the `selector` field in the context for debugging element targeting.
+<details>
+<summary><strong>Navigation and Page Actions</strong></summary>
 
----
+-   **`navigate`**: Navigates to a new URL.
+    -   **Params**: `url`
+-   **`screenshot`**: Takes a screenshot of the page or a specific element.
+    -   **Params**: `elementId` (optional)
+-   **`customScript`**: Executes a custom JavaScript snippet in the browser.
+    -   **Params**: `script`
 
-## 📚 API Reference
+</details>
 
-### POST `/session/start`
-- Start a new browser session
-- Request: `{ "url": "...", "browserOptions": { ... } }`
-- Response: `{ "message": "...", "sessionId": "...", "context": { ... } }`
+<details>
+<summary><strong>Wait Actions</strong></summary>
 
-### POST `/session/{sessionId}/act`
-- Perform an action (see above for all supported actions)
-- Request: `{ "action": "...", ... }`
-- Response: `{ "message": "...", "sessionId": "...", "context": { ... }, "result": { ... } }`
+-   **`waitForDisplayed`**: Waits for an element to be displayed.
+    -   **Params**: `elementId`, `timeout` (optional)
+-   **`waitForEnabled`**: Waits for an element to be enabled.
+    -   **Params**: `elementId`, `timeout` (optional)
+-   **`waitForExist`**: Waits for an element to exist in the DOM.
+    -   **Params**: `elementId`, `timeout` (optional)
 
-### DELETE `/session/{sessionId}`
-- Terminate a session
-- Response: `{ "message": "Session terminated successfully.", "status": "terminated", "sessionId": "..." }`
+</details>
 
-### GET `/session/stats`
-- Get session statistics
-- Response: `{ "message": "...", "status": "success", "stats": { ... } }`
+<details>
+<summary><strong>State Check Actions</strong></summary>
 
-### GET `/health`
-- Health check
-- Response: `{ "status": "healthy", ... }`
+-   **`isDisplayed`**: Checks if an element is displayed.
+    -   **Params**: `elementId`
+-   **`isEnabled`**: Checks if an element is enabled.
+    -   **Params**: `elementId`
+-   **`isSelected`**: Checks if an element (like a checkbox or radio button) is selected.
+    -   **Params**: `elementId`
 
----
+</details>
 
-## 🏁 Final Notes
-- **Robust selectors**: Always use the `elementId` from the context for actions.
-- **AI integration**: The server is designed for LLM/agent loops, but can be used by any automation client.
-- **All major WebdriverIO actions are supported**: If you need more, extend the action schema and executor.
-- **Debugging**: Use the `message` and `selector` fields in responses.
-- **Headless/non-headless**: Set via `browserOptions`.
-- **Screenshots**: Use the `screenshot` action for visual debugging or AI vision.
+## Contributing
 
----
+Contributions are welcome! If you'd like to help improve the server, please feel free to open an issue or submit a pull request.
 
-For more, see the full API and code examples above. For issues, open a GitHub issue or PR. 
+1.  Fork the repository.
+2.  Create your feature branch (`git checkout -b feature/AmazingFeature`).
+3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`).
+4.  Push to the branch (`git push origin feature/AmazingFeature`).
+5.  Open a Pull Request.
+
+## Roadmap
+
+We have many exciting features planned for the future:
+
+-   [ ] Support for other browsers (Firefox, Safari).
+-   [ ] Mobile application support via Appium.
+-   [ ] Enhanced context providers (e.g., accessibility tree parsing).
+-   [ ] Advanced session management features.
