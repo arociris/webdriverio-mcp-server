@@ -1,6 +1,6 @@
 {
   "name": "wdio-mcp-server",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "WebdriverIO Model Context Protocol Server for AI agent web automation",
   "main": "src/server.js",
   "type": "module",
