@@ -23,7 +23,7 @@ The server is designed to be run by an MCP client and you can use this standard 
 
 For tool specific instructions, select your client below for installation instructions.
 
-<details>
+<details markdown="1">
 <summary><strong>Cursor</strong></summary>
 
 #### Click the button to install:
@@ -36,7 +36,7 @@ Go to `Cursor Settings` -> `MCP` -> `Add new MCP Server`. Name it `webdriverio` 
 
 </details>
 
-<details>
+<details markdown="1">
 <summary><strong>VS Code (with compatible agent)</strong></summary>
 
 #### Click the button to install:
@@ -63,7 +63,7 @@ Go to `Cursor Settings` -> `MCP` -> `Add new MCP Server`. Name it `webdriverio` 
 
 </details>
 
-<details>
+<details markdown="1">
 <summary><strong>Other Clients (Gemini CLI, etc.)</strong></summary>
 
 Most MCP-compatible clients will ask for a command to run the server. Use `npx wdio-mcp-server@latest` when prompted.

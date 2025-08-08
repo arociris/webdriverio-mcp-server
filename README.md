@@ -39,7 +39,7 @@ The server is designed to be run by an MCP client and you can use this standard 
 
  For tool specific instructions, select your client below for installation instructions.
 
-<details>
+<details markdown="1">
 <summary><strong>Cursor</strong></summary>
 
 #### Click the button to install:
@@ -52,7 +52,7 @@ Go to `Cursor Settings` -> `MCP` -> `Add new MCP Server`. Name it `webdriverio` 
 
 </details>
 
-<details>
+<details markdown="1">
 <summary><strong>VS Code (with compatible agent)</strong></summary>
 
 #### Click the button to install:
@@ -79,7 +79,7 @@ Go to `Cursor Settings` -> `MCP` -> `Add new MCP Server`. Name it `webdriverio` 
 
 </details>
 
-<details>
+<details markdown="1">
 <summary><strong>Other Clients (Gemini CLI, etc.)</strong></summary>
 
 Most MCP-compatible clients will ask for a command to run the server. Use `npx wdio-mcp-server@latest` when prompted.
@@ -228,7 +228,7 @@ You can create a `wdio-mcp-config.json` file in your project root or specify a p
 
 The `/session/{sessionId}/act` endpoint supports a wide range of WebdriverIO actions.
 
-<details>
+<details markdown="1">
 <summary><strong>Core Automation Actions</strong></summary>
 
 -   **`click`**: Clicks an element.
@@ -248,7 +248,7 @@ The `/session/{sessionId}/act` endpoint supports a wide range of WebdriverIO act
 
 </details>
 
-<details>
+<details markdown="1">
 <summary><strong>Navigation and Page Actions</strong></summary>
 
 -   **`navigate`**: Navigates to a new URL.
@@ -260,7 +260,7 @@ The `/session/{sessionId}/act` endpoint supports a wide range of WebdriverIO act
 
 </details>
 
-<details>
+<details markdown="1">
 <summary><strong>Wait Actions</strong></summary>
 
 -   **`waitForDisplayed`**: Waits for an element to be displayed.
@@ -272,7 +272,7 @@ The `/session/{sessionId}/act` endpoint supports a wide range of WebdriverIO act
 
 </details>
 
-<details>
+<details markdown="1">
 <summary><strong>State Check Actions</strong></summary>
 
 -   **`isDisplayed`**: Checks if an element is displayed.

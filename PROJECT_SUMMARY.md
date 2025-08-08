@@ -1,7 +1,5 @@
 # WebdriverIO Model Context Protocol (MCP) Server - Project Summary
 
-Documentation: https://arociris.github.io/webdriverio-mcp-server/
-
 ## 🎯 Project Overview
 
 A production-grade WebdriverIO MCP server that enables AI agents and automation clients to interact with the web and mobile apps via a structured API. It provides model-readable page context, executes actions, and returns updated context and results.
