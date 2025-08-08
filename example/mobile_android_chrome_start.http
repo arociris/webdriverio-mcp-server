@@ -1,0 +1,14 @@
+### Start Android Chrome session
+POST http://localhost:3000/session/start
+Content-Type: application/json
+
+{
+  "mobile": {
+    "enabled": true,
+    "platformName": "Android",
+    "deviceName": "Android Emulator",
+    "browserName": "Chrome",
+    "automationName": "UiAutomator2"
+  },
+  "url": "https://example.com"
+}

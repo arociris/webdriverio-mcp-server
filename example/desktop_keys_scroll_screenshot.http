@@ -1,0 +1,17 @@
+### Send keys
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "keys", "value": "Enter" }
+
+### Scroll element into view
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "scrollIntoView", "elementId": "footer" }
+
+### Screenshot page
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "screenshot" }

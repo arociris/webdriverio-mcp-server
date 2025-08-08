@@ -1,0 +1,18 @@
+### Click a button
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{
+  "action": "click",
+  "elementId": "button_submit"
+}
+
+### Set value in input
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{
+  "action": "setValue",
+  "elementId": "input_email",
+  "value": "test@example.com"
+}

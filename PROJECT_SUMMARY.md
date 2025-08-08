@@ -2,188 +2,86 @@
 
 ## 🎯 Project Overview
 
-Successfully implemented a **production-grade WebdriverIO MCP server** that enables AI agents to interact with web browsers through a structured API. This server acts as the "eyes and hands" for AI agents on the web, providing a simplified, model-readable representation of web pages and executing actions based on AI decisions.
+A production-grade WebdriverIO MCP server that enables AI agents and automation clients to interact with the web and mobile apps via a structured API. It provides model-readable page context, executes actions, and returns updated context and results.
 
 ## ✅ Completed Features
 
 ### Core Functionality
-- ✅ **Session Management**: Stateful browser sessions with automatic cleanup
-- ✅ **Context Extraction**: Structured representation of web page interactive elements
-- ✅ **Action Execution**: Click, setValue, and navigate actions
-- ✅ **RESTful API**: Clean, documented endpoints
-- ✅ **Production Ready**: Comprehensive error handling, logging, and security
+- ✅ Session Management (stateful, auto-cleanup)
+- ✅ Context Extraction with robust selectors (no NaN)
+- ✅ Web & Mobile Actions (desktop browsers and Appium)
+- ✅ Screenshot support (page or element)
+- ✅ RESTful API with consistent response messages
+- ✅ Standardized error handling with retries and suggestions
+- ✅ Comprehensive documentation (GitHub Pages-ready)
 
 ### Technical Implementation
-- ✅ **Express.js Server**: Modern Node.js web server
-- ✅ **WebdriverIO Integration**: Browser automation with Chrome
-- ✅ **Structured Logging**: Pino logger with pretty formatting
-- ✅ **Request Validation**: Joi schema validation
-- ✅ **Error Handling**: Global error handling middleware
-- ✅ **Security**: Rate limiting, CORS, Helmet
-- ✅ **Configuration**: Environment-based configuration
-- ✅ **Testing**: Comprehensive unit and integration tests
+- ✅ Express.js server (ESM)
+- ✅ WebdriverIO integration (Chrome; Appium for Android/iOS)
+- ✅ Structured logging (Pino)
+- ✅ Joi validation for requests
+- ✅ Global error handler with standard error codes and suggestions
+- ✅ Security: Helmet, CORS, Rate Limiting
+- ✅ Tests: Unit + Integration
 
 ## 📁 Project Structure
-
 ```
 wdio_mcp/
 ├── src/
-│   ├── config/          # Configuration management
-│   ├── controllers/     # API controllers
-│   ├── middleware/      # Express middleware
-│   ├── routes/          # API routes
-│   ├── services/        # Business logic
-│   ├── utils/           # Utilities and helpers
-│   └── server.js        # Main application entry
-├── tests/
-│   ├── integration/     # Integration tests
-│   ├── unit/           # Unit tests
-│   └── setup.js        # Test setup
-├── package.json         # Dependencies and scripts
-├── README.md           # Comprehensive documentation
-├── env.example         # Environment template
-├── .eslintrc.json      # Code quality rules
-├── jest.config.js      # Test configuration
-└── .gitignore          # Git ignore rules
+│   ├── config/            # Configuration management (includes Appium)
+│   ├── controllers/       # API controllers
+│   ├── middleware/        # Error handling
+│   ├── routes/            # API routes
+│   ├── services/          # Session, Actions, Context
+│   ├── utils/             # Logger, Errors, Validation
+│   └── server.js          # App entry
+├── example/               # Sample scripts and quick-start examples
+├── tests/                 # Unit + Integration tests
+├── docs/                  # GitHub Pages documentation
+├── .github/workflows/     # GitHub Actions (Pages deploy)
+├── README.md              # Comprehensive documentation
+├── mcp_server_prompt.md   # Prompt + design and API usage for agents
+├── PROJECT_SUMMARY.md     # This summary
+└── package.json           # Scripts and dependencies
 ```
 
 ## 🚀 API Endpoints
+- POST `/session/start` — Start desktop/mobile session
+- POST `/session/{sessionId}/act` — Execute action and return updated context
+- DELETE `/session/{sessionId}` — Terminate session
+- GET `/session/stats` — Statistics (includes mobile vs desktop)
+- GET `/health` — Health check
 
-### Core Endpoints
-1. **POST** `/session/start` - Start a new browser session
-2. **POST** `/session/{sessionId}/act` - Execute actions
-3. **DELETE** `/session/{sessionId}` - Terminate session
-4. **GET** `/session/stats` - Get session statistics
-5. **GET** `/health` - Health check
+## 🧭 Supported Actions (Highlights)
+- Desktop/Web: `click`, `setValue`, `getText`, `clearValue`, `getAttribute`, `keys`, `scrollIntoView`, `navigate`, `isDisplayed`, `isEnabled`, `isSelected`, `waitForDisplayed`, `waitForEnabled`, `waitForExist`, `customScript`, `screenshot`
+- Mobile/Appium: `mobile:tap` (element or x/y), `mobile:swipe`, `mobile:scroll`, `mobile:back`, `mobile:pressKey`, `mobile:hideKeyboard`
 
-### Supported Actions
-- `click` - Click interactive elements
-- `setValue` - Set values in form inputs
-- `navigate` - Navigate to URLs
+## 📱 Mobile Support (Appium)
+- Android & iOS support for native apps or mobile browsers (Chrome/Safari)
+- Appium endpoint configurable via env: `APPIUM_PROTOCOL`, `APPIUM_HOST`, `APPIUM_PORT`, `APPIUM_PATH`
+- Session stats report mobile vs desktop counts
+
+## 🖼️ Screenshot
+- `screenshot` action returns base64; supports page or element-level capture
+
+## ❗ Error Handling
+- Standard format: `status`, `code`, `message`, `suggestion`, `details`, `timestamp`
+- Automatic retries with backoff for stale/detached/transient not-found
+- Clear, actionable suggestions to aid humans and agents
 
 ## 🧪 Testing Results
+- ✅ All tests passing locally
+- Unit and integration suites cover: session lifecycle, actions, context extraction, errors, validation, endpoints
 
-### Test Coverage
-- ✅ **Unit Tests**: 8 tests passed
-- ✅ **Integration Tests**: 14 tests passed
-- ✅ **Total**: 22 tests passed, 0 failures
-- ✅ **Coverage**: Comprehensive testing of all core functionality
+## 📚 Documentation & Publishing
+- Docs live under `docs/` (Getting Started, API, AI Integration, Mobile, Examples)
+- GitHub Actions workflow publishes `docs/` to GitHub Pages on push to `main`
 
-### Test Categories
-- Session management (creation, termination, retrieval)
-- Action execution (click, setValue, navigate)
-- Error handling (invalid requests, missing sessions)
-- API validation (request schema validation)
-- Health checks and statistics
+## 🔧 Quick Start
+- `npm install`
+- `cp env.example .env` (optional: set Appium vars)
+- `npm run dev` (development) / `npm start` (production)
+- Use examples in `example/` to interact with the API quickly
 
-## 🔧 Technical Stack
-
-### Dependencies
-- **Express.js** - Web server framework
-- **WebdriverIO** - Browser automation
-- **Pino** - Structured logging
-- **Joi** - Request validation
-- **Helmet** - Security middleware
-- **CORS** - Cross-origin resource sharing
-- **Rate Limiting** - Request throttling
-
-### Development Tools
-- **Jest** - Testing framework
-- **ESLint** - Code quality
-- **Nodemon** - Development server
-- **Supertest** - API testing
-
-## 🛡️ Security Features
-
-- ✅ **Rate Limiting**: Prevents abuse
-- ✅ **Input Validation**: All requests validated
-- ✅ **Session Timeout**: Automatic cleanup (10 minutes)
-- ✅ **Error Handling**: No sensitive data exposure
-- ✅ **CORS**: Configurable cross-origin requests
-- ✅ **Helmet**: Security headers
-
-## 📊 Performance Features
-
-- ✅ **Session Management**: Efficient session lifecycle
-- ✅ **Automatic Cleanup**: Expired session removal
-- ✅ **Structured Logging**: Performance monitoring
-- ✅ **Error Recovery**: Graceful error handling
-- ✅ **Resource Management**: Browser instance cleanup
-
-## 🚀 Deployment Ready
-
-### Production Features
-- ✅ **Environment Configuration**: Flexible config via env vars
-- ✅ **Process Management**: Graceful shutdown handling
-- ✅ **Health Checks**: Server status monitoring
-- ✅ **Logging**: Structured logs for monitoring
-- ✅ **Error Handling**: Comprehensive error responses
-
-### Deployment Options
-- ✅ **Docker Support**: Containerized deployment
-- ✅ **PM2 Support**: Process management
-- ✅ **Nginx Ready**: Reverse proxy configuration
-- ✅ **Environment Variables**: Production configuration
-
-## 📚 Documentation
-
-### Complete Documentation
-- ✅ **README.md**: Comprehensive project documentation
-- ✅ **API Documentation**: Detailed endpoint documentation
-- ✅ **Usage Examples**: JavaScript and Python examples
-- ✅ **Configuration Guide**: Environment setup instructions
-- ✅ **Deployment Guide**: Production deployment steps
-
-## 🎯 Key Achievements
-
-1. **Production-Grade Quality**: Enterprise-ready codebase with comprehensive testing
-2. **Comprehensive Testing**: 22 tests covering all core functionality
-3. **Security First**: Multiple security layers implemented
-4. **Excellent Documentation**: Complete API and usage documentation
-5. **Modern Architecture**: Clean, scalable code structure
-6. **Error Handling**: Robust error handling throughout
-7. **Performance Optimized**: Efficient session and resource management
-
-## 🔄 Usage Example
-
-```javascript
-// Start a session
-const response = await fetch('http://localhost:3000/session/start', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    url: 'https://httpbin.org/forms/post',
-    browserOptions: { headless: true }
-  })
-});
-
-const { sessionId, context } = await response.json();
-
-// Execute actions
-await fetch(`http://localhost:3000/session/${sessionId}/act`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    action: 'setValue',
-    elementId: 'i_1',
-    value: 'test input'
-  })
-});
-
-// Terminate session
-await fetch(`http://localhost:3000/session/${sessionId}`, {
-  method: 'DELETE'
-});
-```
-
-## ✅ Project Status: COMPLETE
-
-The WebdriverIO MCP server is **production-ready** with:
-- ✅ All core functionality implemented
-- ✅ Comprehensive testing (22/22 tests passing)
-- ✅ Complete documentation
-- ✅ Security features implemented
-- ✅ Error handling throughout
-- ✅ Production deployment ready
-
-**Ready for immediate use in AI agent web automation scenarios!** 
+## ✅ Status
+- Production-ready, with desktop and mobile support, robust error handling, screenshots, and comprehensive docs suitable for publishing to a broad audience. 

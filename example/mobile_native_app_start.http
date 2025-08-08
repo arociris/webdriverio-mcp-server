@@ -1,0 +1,14 @@
+### Start Android native app session
+POST http://localhost:3000/session/start
+Content-Type: application/json
+
+{
+  "mobile": {
+    "enabled": true,
+    "platformName": "Android",
+    "deviceName": "Android Emulator",
+    "appPackage": "com.example.app",
+    "appActivity": ".MainActivity",
+    "automationName": "UiAutomator2"
+  }
+}

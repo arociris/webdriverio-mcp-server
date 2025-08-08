@@ -12,14 +12,14 @@ const sessionLogger = logger.child({ context: 'SessionController' });
  * @param {Object} res - Express response object
  */
 export const startSession = async (req, res) => {
-  const { url, browserOptions } = req.validatedBody;
+  const { url, browserOptions, mobile } = req.validatedBody;
   const sessionId = uuidv4();
 
   try {
-    sessionLogger.info({ sessionId, url }, 'Starting new session');
+    sessionLogger.info({ sessionId, url, mobile: !!(mobile && mobile.enabled) }, 'Starting new session');
 
     // Create browser session
-    const browser = await sessionManager.createSession(sessionId, url, browserOptions);
+    const browser = await sessionManager.createSession(sessionId, url, browserOptions, mobile);
 
     // Extract initial context
     const { context } = await contextExtractor.extractContext(browser);
@@ -29,6 +29,7 @@ export const startSession = async (req, res) => {
     res.status(201).json({
       message: 'Session started successfully.',
       sessionId,
+      isMobile: !!(mobile && mobile.enabled),
       context,
     });
   } catch (error) {

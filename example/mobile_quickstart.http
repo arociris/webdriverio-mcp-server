@@ -1,0 +1,35 @@
+### Start an Android Chrome session
+POST http://localhost:3000/session/start
+Content-Type: application/json
+
+{
+  "mobile": {
+    "enabled": true,
+    "platformName": "Android",
+    "deviceName": "Android Emulator",
+    "browserName": "Chrome",
+    "automationName": "UiAutomator2"
+  },
+  "url": "https://example.com"
+}
+
+### Tap by element
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "mobile:tap", "elementId": "login_button" }
+
+### Swipe down
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "mobile:swipe", "direction": "down", "duration": 300 }
+
+### Hide keyboard
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "mobile:hideKeyboard" }
+
+### Terminate
+DELETE http://localhost:3000/session/{{sessionId}}

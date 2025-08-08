@@ -1,7 +1,9 @@
 
-# WebdriverIO MCP Server
+# WebdriverIO Model Context Protocol (MCP) Server
 
-[![npm version](https://badge.fury.io/js/wdio-mcp-server.svg)](https://badge.fury.io/js/wdio-mcp-server)
+[![npm version](https://badge.fury.io/js/wdio-mcp-server.svg)](https://badge.fury.io/js/wdio-mcp-server) 
+
+[View Online Documentation](https://arociris.github.io/webdriverio-mcp-server/)
 
 A Model Context Protocol (MCP) server for [WebdriverIO](https://webdriver.io/). This server acts as a bridge, allowing Large Language Models (LLMs) and AI agents to control a web browser. It provides a structured, model-readable representation of web pages and executes actions based on AI-driven decisions.
 
@@ -37,7 +39,7 @@ The server is designed to be run by an MCP client and you can use this standard 
 
  For tool specific instructions, select your client below for installation instructions.
 
-<details>
+<details markdown="1">
 <summary><strong>Cursor</strong></summary>
 
 #### Click the button to install:
@@ -50,7 +52,7 @@ Go to `Cursor Settings` -> `MCP` -> `Add new MCP Server`. Name it `webdriverio` 
 
 </details>
 
-<details>
+<details markdown="1">
 <summary><strong>VS Code (with compatible agent)</strong></summary>
 
 #### Click the button to install:
@@ -77,7 +79,7 @@ Go to `Cursor Settings` -> `MCP` -> `Add new MCP Server`. Name it `webdriverio` 
 
 </details>
 
-<details>
+<details markdown="1">
 <summary><strong>Other Clients (Gemini CLI, etc.)</strong></summary>
 
 Most MCP-compatible clients will ask for a command to run the server. Use `npx wdio-mcp-server@latest` when prompted.
@@ -226,7 +228,7 @@ You can create a `wdio-mcp-config.json` file in your project root or specify a p
 
 The `/session/{sessionId}/act` endpoint supports a wide range of WebdriverIO actions.
 
-<details>
+<details markdown="1">
 <summary><strong>Core Automation Actions</strong></summary>
 
 -   **`click`**: Clicks an element.
@@ -246,7 +248,7 @@ The `/session/{sessionId}/act` endpoint supports a wide range of WebdriverIO act
 
 </details>
 
-<details>
+<details markdown="1">
 <summary><strong>Navigation and Page Actions</strong></summary>
 
 -   **`navigate`**: Navigates to a new URL.
@@ -258,7 +260,7 @@ The `/session/{sessionId}/act` endpoint supports a wide range of WebdriverIO act
 
 </details>
 
-<details>
+<details markdown="1">
 <summary><strong>Wait Actions</strong></summary>
 
 -   **`waitForDisplayed`**: Waits for an element to be displayed.
@@ -270,7 +272,7 @@ The `/session/{sessionId}/act` endpoint supports a wide range of WebdriverIO act
 
 </details>
 
-<details>
+<details markdown="1">
 <summary><strong>State Check Actions</strong></summary>
 
 -   **`isDisplayed`**: Checks if an element is displayed.
@@ -281,6 +283,112 @@ The `/session/{sessionId}/act` endpoint supports a wide range of WebdriverIO act
     -   **Params**: `elementId`
 
 </details>
+
+## 📱 Mobile Automation Support (Appium)
+
+The server can create **mobile sessions** via Appium for Android and iOS (native apps or mobile browsers).
+
+### Start a Mobile Session (Android Chrome)
+```json
+POST /session/start
+{
+  "mobile": {
+    "enabled": true,
+    "platformName": "Android",
+    "deviceName": "Android Emulator",
+    "browserName": "Chrome",
+    "automationName": "UiAutomator2"
+  },
+  "url": "https://example.com"
+}
+```
+
+### Start a Mobile Session (iOS Safari)
+```json
+POST /session/start
+{
+  "mobile": {
+    "enabled": true,
+    "platformName": "iOS",
+    "deviceName": "iPhone 15",
+    "browserName": "Safari",
+    "automationName": "XCUITest"
+  },
+  "url": "https://example.com"
+}
+```
+
+### Start a Native App Session (Android)
+```json
+POST /session/start
+{
+  "mobile": {
+    "enabled": true,
+    "platformName": "Android",
+    "deviceName": "Android Emulator",
+    "appPackage": "com.example.app",
+    "appActivity": ".MainActivity",
+    "automationName": "UiAutomator2"
+  }
+}
+```
+
+### Mobile Actions
+- `mobile:tap` — element or coordinates
+  ```json
+  { "action": "mobile:tap", "elementId": "login_button" }
+  { "action": "mobile:tap", "x": 120, "y": 520 }
+  ```
+- `mobile:swipe` — directions: up/down/left/right
+  ```json
+  { "action": "mobile:swipe", "direction": "up", "duration": 300 }
+  ```
+- `mobile:scroll` — alias of swipe with default params
+  ```json
+  { "action": "mobile:scroll", "direction": "down" }
+  ```
+- `mobile:back` — back navigation
+  ```json
+  { "action": "mobile:back" }
+  ```
+- `mobile:pressKey` — send platform key
+  ```json
+  { "action": "mobile:pressKey", "key": "Enter" }
+  ```
+- `mobile:hideKeyboard` — hide soft keyboard
+  ```json
+  { "action": "mobile:hideKeyboard" }
+  ```
+
+### Appium Connection Config
+Set via environment variables:
+```
+APPIUM_PROTOCOL=http
+APPIUM_HOST=127.0.0.1
+APPIUM_PORT=4723
+APPIUM_PATH=/wd/hub
+```
+
+The server will route mobile sessions through this Appium endpoint.
+
+## ❗ Error Handling & Resilience
+
+- All API errors use a standard format with fields: `status`, `code`, `message`, `suggestion`, `details`, `timestamp`.
+- Element-related errors include helpful suggestions (e.g., re-extract context, wait, scroll, etc.).
+- Stale elements, detached nodes, and transient not-found errors are retried automatically with small backoff.
+- You can rely on clear `message` values for human-readable debugging, and `code` for programmatic handling.
+
+Example error response:
+```json
+{
+  "status": "error",
+  "code": "ELEMENT_NOT_FOUND",
+  "message": "Element with id 'input_email' was not found in the current page context.",
+  "suggestion": "Re-extract context, verify selector stability, or wait for the element to exist.",
+  "details": { "elementId": "input_email" },
+  "timestamp": "2025-01-01T00:00:00.000Z"
+}
+```
 
 ## Contributing
 

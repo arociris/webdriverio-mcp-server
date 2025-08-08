@@ -1,0 +1,10 @@
+### Wait for element displayed then click
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "waitForDisplayed", "elementId": "modal", "timeout": 10000 }
+
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "click", "elementId": "modal_close" }

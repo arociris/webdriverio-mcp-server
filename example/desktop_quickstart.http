@@ -1,0 +1,35 @@
+### Start a desktop session
+POST http://localhost:3000/session/start
+Content-Type: application/json
+
+{
+  "url": "https://httpbin.org/forms/post",
+  "browserOptions": { "headless": true }
+}
+
+### Click, then set value
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{
+  "action": "click",
+  "elementId": "button_submit"
+}
+
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{
+  "action": "setValue",
+  "elementId": "input_email",
+  "value": "test@example.com"
+}
+
+### Screenshot
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "screenshot" }
+
+### Terminate
+DELETE http://localhost:3000/session/{{sessionId}}
