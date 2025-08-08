@@ -1,7 +1,9 @@
 
-# WebdriverIO MCP Server
+# WebdriverIO Model Context Protocol (MCP) Server
 
-[![npm version](https://badge.fury.io/js/wdio-mcp-server.svg)](https://badge.fury.io/js/wdio-mcp-server)
+[![npm version](https://badge.fury.io/js/wdio-mcp-server.svg)](https://badge.fury.io/js/wdio-mcp-server) 
+
+[View Online Documentation](https://arociris.github.io/webdriverio-mcp-server/)
 
 A Model Context Protocol (MCP) server for [WebdriverIO](https://webdriver.io/). This server acts as a bridge, allowing Large Language Models (LLMs) and AI agents to control a web browser. It provides a structured, model-readable representation of web pages and executes actions based on AI-driven decisions.
 
