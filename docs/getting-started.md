@@ -1,18 +1,32 @@
+---
+layout: default
+title: Getting Started
+nav_order: 2
+---
+
 # Getting Started
 
-## Prerequisites
+## Requirements
 - Node.js >= 18
-- Chrome installed (for desktop web)
-- Appium server and platform SDKs (for mobile)
+- Chrome installed (desktop)
+- Appium + platform SDKs (mobile)
 
-## Install & Run
+## Install
 ```bash
 npm install
 cp env.example .env
+```
+
+## Run
+```bash
+# development
 npm run dev
-# or
+
+# production
 npm start
 ```
+
+> Tip: Configure Appium endpoint with `APPIUM_*` env vars if using mobile.
 
 ## Start a Desktop Session
 ```http
@@ -41,13 +55,10 @@ POST /session/start
 ## Execute an Action
 ```http
 POST /session/{sessionId}/act
-{
-  "action": "click",
-  "elementId": "button_submit"
-}
+{ "action": "click", "elementId": "button_submit" }
 ```
 
-## Terminate a Session
+## Terminate
 ```http
 DELETE /session/{sessionId}
 ```

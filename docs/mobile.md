@@ -1,12 +1,19 @@
-# Mobile (Appium) Guide
+---
+layout: default
+title: Mobile (Appium)
+nav_order: 5
+---
+
+# Mobile (Appium)
 
 ## Requirements
-- Appium server running (e.g., `appium` CLI)
-- Android SDK / Xcode setup depending on platform
-- Real device or emulator/simulator
+- Appium server (CLI or Appium Desktop)
+- Android SDK / Xcode
+- Emulator/Simulator or real device
 
-## Start Mobile Browser Session
-```json
+## Start Mobile Browser Session (Android)
+```http
+POST /session/start
 {
   "mobile": {
     "enabled": true,
@@ -19,8 +26,9 @@
 }
 ```
 
-## Start Native App Session (Android)
-```json
+## Start Native App (Android)
+```http
+POST /session/start
 {
   "mobile": {
     "enabled": true,
@@ -34,15 +42,15 @@
 ```
 
 ## Actions
-- `mobile:tap` (element or coordinates)
-- `mobile:swipe` (up/down/left/right)
-- `mobile:scroll` (alias of swipe)
-- `mobile:back`
-- `mobile:pressKey`
-- `mobile:hideKeyboard`
+- Tap: `mobile:tap` (element or x,y)
+- Swipe: `mobile:swipe` (up/down/left/right)
+- Scroll: `mobile:scroll`
+- Back: `mobile:back`
+- Press key: `mobile:pressKey`
+- Hide keyboard: `mobile:hideKeyboard`
 
 ## Appium Endpoint
-Configured with env vars:
+Set with env vars:
 ```
 APPIUM_PROTOCOL=http
 APPIUM_HOST=127.0.0.1
