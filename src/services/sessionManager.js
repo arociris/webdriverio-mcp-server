@@ -9,45 +9,72 @@ class SessionManager {
     this.startCleanupInterval();
   }
 
-  /**
-   * Create a new browser session
-   * @param {string} sessionId - Unique session identifier
-   * @param {string} url - Initial URL to navigate to
-   * @param {Object} browserOptions - Browser configuration options
-   * @returns {Promise<Object>} Browser instance
-   */
-  async createSession(sessionId, url, browserOptions = {}) {
+  async createSession(sessionId, url, browserOptions = {}, mobile) {
     try {
-      const options = {
-        capabilities: {
-          browserName: 'chrome',
-          'goog:chromeOptions': {
-            args: [
-              '--no-sandbox',
-              '--disable-dev-shm-usage',
-              '--disable-gpu',
-              browserOptions.headless !== false ? '--headless' : '',
-            ].filter(Boolean),
+      let options;
+      if (mobile && mobile.enabled) {
+        // Appium mobile session
+        const caps = {
+          platformName: mobile.platformName,
+          deviceName: mobile.deviceName,
+          automationName: mobile.automationName || (mobile.platformName === 'iOS' ? 'XCUITest' : 'UiAutomator2'),
+          app: mobile.app,
+          browserName: mobile.browserName,
+          platformVersion: mobile.platformVersion,
+          appPackage: mobile.appPackage,
+          appActivity: mobile.appActivity,
+          udid: mobile.udid,
+          noReset: mobile.noReset,
+          fullReset: mobile.fullReset,
+          language: mobile.language,
+          locale: mobile.locale,
+          newCommandTimeout: mobile.newCommandTimeout || 120,
+          ...(mobile.otherCaps || {}),
+        };
+        options = {
+          protocol: config.appium.protocol,
+          hostname: config.appium.host,
+          port: config.appium.port,
+          path: config.appium.path,
+          logLevel: 'error',
+          capabilities: caps,
+          connectionRetryCount: 1,
+        };
+      } else {
+        // Desktop browser session
+        options = {
+          capabilities: {
+            browserName: 'chrome',
+            'goog:chromeOptions': {
+              args: [
+                '--no-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-gpu',
+                browserOptions.headless !== false ? '--headless' : '',
+              ].filter(Boolean),
+            },
           },
-        },
-        logLevel: 'error',
-        timeout: browserOptions.timeout || config.browser.timeout,
-      };
+          logLevel: 'error',
+          timeout: browserOptions.timeout || config.browser.timeout,
+        };
+      }
 
       const browser = await remote(options);
-      
-      // Navigate to the initial URL
-      await browser.url(url);
-      
-      // Store the session
+
+      // Navigate if URL provided or if this is a mobile browser session
+      if (url) {
+        await browser.url(url);
+      }
+
       this.sessions.set(sessionId, {
         browser,
         createdAt: Date.now(),
         lastActivity: Date.now(),
         url,
+        isMobile: !!(mobile && mobile.enabled),
       });
 
-      this.sessionLogger.info({ sessionId, url }, 'Session created successfully');
+      this.sessionLogger.info({ sessionId, url, isMobile: !!(mobile && mobile.enabled) }, 'Session created successfully');
       return browser;
     } catch (error) {
       this.sessionLogger.error({ sessionId, error: error.message }, 'Failed to create session');
@@ -55,11 +82,6 @@ class SessionManager {
     }
   }
 
-  /**
-   * Get an existing browser session
-   * @param {string} sessionId - Session identifier
-   * @returns {Object|null} Session object or null if not found
-   */
   getSession(sessionId) {
     const session = this.sessions.get(sessionId);
     if (session) {
@@ -71,11 +93,6 @@ class SessionManager {
     return session;
   }
 
-  /**
-   * Terminate a browser session
-   * @param {string} sessionId - Session identifier
-   * @returns {Promise<boolean>} True if session was terminated, false if not found
-   */
   async terminateSession(sessionId) {
     const session = this.sessions.get(sessionId);
     if (!session) {
@@ -90,23 +107,15 @@ class SessionManager {
       return true;
     } catch (error) {
       this.sessionLogger.error({ sessionId, error: error.message }, 'Failed to terminate session');
-      // Remove from map even if browser cleanup failed
       this.sessions.delete(sessionId);
       return true;
     }
   }
 
-  /**
-   * Get all active session IDs
-   * @returns {Array<string>} Array of session IDs
-   */
   getActiveSessionIds() {
     return Array.from(this.sessions.keys());
   }
 
-  /**
-   * Clean up expired sessions
-   */
   async cleanupExpiredSessions() {
     const now = Date.now();
     const expiredSessions = [];
@@ -127,11 +136,7 @@ class SessionManager {
     }
   }
 
-  /**
-   * Start the cleanup interval
-   */
   startCleanupInterval() {
-    // Clean up expired sessions every 5 minutes
     setInterval(() => {
       this.cleanupExpiredSessions().catch(error => {
         this.sessionLogger.error({ error: error.message }, 'Error during cleanup');
@@ -139,20 +144,18 @@ class SessionManager {
     }, 5 * 60 * 1000);
   }
 
-  /**
-   * Get session statistics
-   * @returns {Object} Session statistics
-   */
   getStats() {
     const now = Date.now();
     const activeSessions = Array.from(this.sessions.values());
-    
+
     return {
       totalSessions: this.sessions.size,
       activeSessions: activeSessions.length,
-      oldestSession: activeSessions.length > 0 
+      oldestSession: activeSessions.length > 0
         ? Math.floor((now - Math.min(...activeSessions.map(s => s.createdAt))) / 1000)
         : 0,
+      mobileSessions: activeSessions.filter(s => s.isMobile).length,
+      desktopSessions: activeSessions.filter(s => !s.isMobile).length,
     };
   }
 }

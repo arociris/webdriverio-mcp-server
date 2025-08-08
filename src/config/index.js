@@ -66,4 +66,10 @@ export const config = {
     rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || fileConfig.security?.rateLimitWindowMs || defaultConfig.security.rateLimitWindowMs,
     rateLimitMaxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || fileConfig.security?.rateLimitMaxRequests || defaultConfig.security.rateLimitMaxRequests,
   },
+  appium: {
+    protocol: process.env.APPIUM_PROTOCOL || 'http',
+    host: process.env.APPIUM_HOST || '127.0.0.1',
+    port: parseInt(process.env.APPIUM_PORT) || 4723,
+    path: process.env.APPIUM_PATH || '/wd/hub',
+  },
 };

@@ -1,0 +1,8 @@
+### Start desktop non-headless session
+POST http://localhost:3000/session/start
+Content-Type: application/json
+
+{
+  "url": "https://httpbin.org/forms/post",
+  "browserOptions": { "headless": false }
+}

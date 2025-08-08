@@ -282,6 +282,112 @@ The `/session/{sessionId}/act` endpoint supports a wide range of WebdriverIO act
 
 </details>
 
+## 📱 Mobile Automation Support (Appium)
+
+The server can create **mobile sessions** via Appium for Android and iOS (native apps or mobile browsers).
+
+### Start a Mobile Session (Android Chrome)
+```json
+POST /session/start
+{
+  "mobile": {
+    "enabled": true,
+    "platformName": "Android",
+    "deviceName": "Android Emulator",
+    "browserName": "Chrome",
+    "automationName": "UiAutomator2"
+  },
+  "url": "https://example.com"
+}
+```
+
+### Start a Mobile Session (iOS Safari)
+```json
+POST /session/start
+{
+  "mobile": {
+    "enabled": true,
+    "platformName": "iOS",
+    "deviceName": "iPhone 15",
+    "browserName": "Safari",
+    "automationName": "XCUITest"
+  },
+  "url": "https://example.com"
+}
+```
+
+### Start a Native App Session (Android)
+```json
+POST /session/start
+{
+  "mobile": {
+    "enabled": true,
+    "platformName": "Android",
+    "deviceName": "Android Emulator",
+    "appPackage": "com.example.app",
+    "appActivity": ".MainActivity",
+    "automationName": "UiAutomator2"
+  }
+}
+```
+
+### Mobile Actions
+- `mobile:tap` — element or coordinates
+  ```json
+  { "action": "mobile:tap", "elementId": "login_button" }
+  { "action": "mobile:tap", "x": 120, "y": 520 }
+  ```
+- `mobile:swipe` — directions: up/down/left/right
+  ```json
+  { "action": "mobile:swipe", "direction": "up", "duration": 300 }
+  ```
+- `mobile:scroll` — alias of swipe with default params
+  ```json
+  { "action": "mobile:scroll", "direction": "down" }
+  ```
+- `mobile:back` — back navigation
+  ```json
+  { "action": "mobile:back" }
+  ```
+- `mobile:pressKey` — send platform key
+  ```json
+  { "action": "mobile:pressKey", "key": "Enter" }
+  ```
+- `mobile:hideKeyboard` — hide soft keyboard
+  ```json
+  { "action": "mobile:hideKeyboard" }
+  ```
+
+### Appium Connection Config
+Set via environment variables:
+```
+APPIUM_PROTOCOL=http
+APPIUM_HOST=127.0.0.1
+APPIUM_PORT=4723
+APPIUM_PATH=/wd/hub
+```
+
+The server will route mobile sessions through this Appium endpoint.
+
+## ❗ Error Handling & Resilience
+
+- All API errors use a standard format with fields: `status`, `code`, `message`, `suggestion`, `details`, `timestamp`.
+- Element-related errors include helpful suggestions (e.g., re-extract context, wait, scroll, etc.).
+- Stale elements, detached nodes, and transient not-found errors are retried automatically with small backoff.
+- You can rely on clear `message` values for human-readable debugging, and `code` for programmatic handling.
+
+Example error response:
+```json
+{
+  "status": "error",
+  "code": "ELEMENT_NOT_FOUND",
+  "message": "Element with id 'input_email' was not found in the current page context.",
+  "suggestion": "Re-extract context, verify selector stability, or wait for the element to exist.",
+  "details": { "elementId": "input_email" },
+  "timestamp": "2025-01-01T00:00:00.000Z"
+}
+```
+
 ## Contributing
 
 Contributions are welcome! If you'd like to help improve the server, please feel free to open an issue or submit a pull request.

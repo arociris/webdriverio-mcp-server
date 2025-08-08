@@ -1,0 +1,9 @@
+### Execute custom script
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{
+  "action": "customScript",
+  "script": "return document.title;",
+  "args": []
+}

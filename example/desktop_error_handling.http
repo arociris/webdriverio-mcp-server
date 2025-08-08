@@ -1,0 +1,16 @@
+### Try getting missing element (expect error)
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "click", "elementId": "non_existent" }
+
+### Recommended: wait then retry
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "waitForExist", "elementId": "delayed_button", "timeout": 10000 }
+
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "click", "elementId": "delayed_button" }

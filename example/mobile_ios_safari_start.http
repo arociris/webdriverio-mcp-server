@@ -1,0 +1,14 @@
+### Start iOS Safari session
+POST http://localhost:3000/session/start
+Content-Type: application/json
+
+{
+  "mobile": {
+    "enabled": true,
+    "platformName": "iOS",
+    "deviceName": "iPhone 15",
+    "browserName": "Safari",
+    "automationName": "XCUITest"
+  },
+  "url": "https://example.com"
+}

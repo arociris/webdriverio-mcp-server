@@ -1,0 +1,11 @@
+### Tap by coordinates
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "mobile:tap", "x": 120, "y": 520 }
+
+### Swipe up
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "mobile:swipe", "direction": "up", "duration": 300 }

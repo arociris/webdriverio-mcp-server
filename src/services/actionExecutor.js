@@ -1,9 +1,32 @@
 import { logger } from '../utils/logger.js';
 import fs from 'fs/promises';
+import { AppError, Errors } from '../utils/errors.js';
 
 class ActionExecutor {
   constructor() {
     this.actionLogger = logger.child({ context: 'ActionExecutor' });
+  }
+
+  async withRetries(fn, { retries = 2, delayMs = 200, onRetry } = {}) {
+    let lastError;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        lastError = error;
+        const msg = (error && error.message) || '';
+        const isStale = /stale( element)? reference/i.test(msg);
+        const isDetached = /detached/i.test(msg);
+        const isNotFound = /element.*not.*found/i.test(msg);
+        if (attempt < retries && (isStale || isDetached || isNotFound)) {
+          if (onRetry) onRetry({ attempt, error });
+          await new Promise(r => setTimeout(r, delayMs * (attempt + 1)));
+          continue;
+        }
+        throw error;
+      }
+    }
+    throw lastError;
   }
 
   async executeAction(browser, action, elementMap) {
@@ -68,70 +91,109 @@ class ActionExecutor {
         case 'customScript':
           result = await this.executeCustomScript(browser, action.script, action.args);
           break;
+        // Mobile specific actions
+        case 'mobile:tap':
+          result = await this.executeMobileTap(browser, action, elementMap);
+          break;
+        case 'mobile:swipe':
+          result = await this.executeMobileSwipe(browser, action);
+          break;
+        case 'mobile:scroll':
+          result = await this.executeMobileScroll(browser, action);
+          break;
+        case 'mobile:back':
+          result = await this.executeMobileBack(browser);
+          break;
+        case 'mobile:pressKey':
+          result = await this.executeMobilePressKey(browser, action.key);
+          break;
+        case 'mobile:hideKeyboard':
+          result = await this.executeMobileHideKeyboard(browser);
+          break;
         default:
-          throw new Error(`Unsupported action: ${action.action}`);
+          throw Errors.invalidAction(action.action);
       }
       this.actionLogger.info({ action }, 'Action executed successfully');
       return { message: `Action '${action.action}' executed successfully.`, result };
     } catch (error) {
-      this.actionLogger.error({ action, error: error.message }, 'Failed to execute action');
-      throw error;
+      const appErr = error instanceof AppError ? error : new AppError(error.message);
+      this.actionLogger.error({ action, error: appErr.message, code: appErr.code }, 'Failed to execute action');
+      throw appErr;
     }
   }
 
   async getElement(browser, elementId, elementMap) {
     const elementInfo = elementMap[elementId];
     if (!elementInfo) {
-      throw new Error(`Element with id '${elementId}' was not found in the current page context.`);
+      throw Errors.elementNotFound(elementId);
     }
-    const element = await browser.$(elementInfo.selector);
-    return element;
+    const locate = async () => await browser.$(elementInfo.selector);
+    return this.withRetries(async () => {
+      const el = await locate();
+      // access a property to ensure it is attached
+      await el.isExisting();
+      return el;
+    }, { onRetry: ({ attempt, error }) => this.actionLogger.warn({ elementId, attempt, error: error.message }, 'Retrying getElement due to stale/detached/not found') });
   }
 
   async executeClick(browser, elementId, elementMap) {
     const element = await this.getElement(browser, elementId, elementMap);
-    await element.scrollIntoView();
-    await element.waitForClickable({ timeout: 5000 });
-    await element.click();
-    return { message: `Clicked element '${elementId}'.` };
+    return this.withRetries(async () => {
+      await element.scrollIntoView();
+      await element.waitForClickable({ timeout: 5000 });
+      await element.click();
+      return { message: `Clicked element '${elementId}'.` };
+    }, { onRetry: ({ attempt, error }) => this.actionLogger.warn({ elementId, attempt, error: error.message }, 'Retrying click') });
   }
 
   async executeSetValue(browser, elementId, value, elementMap) {
     const element = await this.getElement(browser, elementId, elementMap);
-    await element.scrollIntoView();
-    await element.clearValue();
-    await element.setValue(value);
-    return { message: `Set value for element '${elementId}'.` };
+    return this.withRetries(async () => {
+      await element.scrollIntoView();
+      await element.clearValue();
+      await element.setValue(value);
+      return { message: `Set value for element '${elementId}'.` };
+    }, { onRetry: ({ attempt, error }) => this.actionLogger.warn({ elementId, attempt, error: error.message }, 'Retrying setValue') });
   }
 
   async executeGetText(browser, elementId, elementMap) {
     const element = await this.getElement(browser, elementId, elementMap);
-    const text = await element.getText();
-    return { message: `Got text for element '${elementId}'.`, text };
+    return this.withRetries(async () => {
+      const text = await element.getText();
+      return { message: `Got text for element '${elementId}'.`, text };
+    }, { onRetry: ({ attempt, error }) => this.actionLogger.warn({ elementId, attempt, error: error.message }, 'Retrying getText') });
   }
 
   async executeClearValue(browser, elementId, elementMap) {
     const element = await this.getElement(browser, elementId, elementMap);
-    await element.clearValue();
-    return { message: `Cleared value for element '${elementId}'.` };
+    return this.withRetries(async () => {
+      await element.clearValue();
+      return { message: `Cleared value for element '${elementId}'.` };
+    }, { onRetry: ({ attempt, error }) => this.actionLogger.warn({ elementId, attempt, error: error.message }, 'Retrying clearValue') });
   }
 
   async executeSelectByVisibleText(browser, elementId, text, elementMap) {
     const element = await this.getElement(browser, elementId, elementMap);
-    await element.selectByVisibleText(text);
-    return { message: `Selected by visible text '${text}' for element '${elementId}'.` };
+    return this.withRetries(async () => {
+      await element.selectByVisibleText(text);
+      return { message: `Selected by visible text '${text}' for element '${elementId}'.` };
+    }, { onRetry: ({ attempt, error }) => this.actionLogger.warn({ elementId, attempt, error: error.message }, 'Retrying selectByVisibleText') });
   }
 
   async executeSelectByIndex(browser, elementId, index, elementMap) {
     const element = await this.getElement(browser, elementId, elementMap);
-    await element.selectByIndex(index);
-    return { message: `Selected by index '${index}' for element '${elementId}'.` };
+    return this.withRetries(async () => {
+      await element.selectByIndex(index);
+      return { message: `Selected by index '${index}' for element '${elementId}'.` };
+    }, { onRetry: ({ attempt, error }) => this.actionLogger.warn({ elementId, attempt, error: error.message }, 'Retrying selectByIndex') });
   }
 
   async executeSelectByAttribute(browser, elementId, attribute, value, elementMap) {
     const element = await this.getElement(browser, elementId, elementMap);
-    await element.selectByAttribute(attribute, value);
-    return { message: `Selected by attribute '${attribute}'='${value}' for element '${elementId}'.` };
+    return this.withRetries(async () => {
+      await element.selectByAttribute(attribute, value);
+      return { message: `Selected by attribute '${attribute}'='${value}' for element '${elementId}'.` };
+    }, { onRetry: ({ attempt, error }) => this.actionLogger.warn({ elementId, attempt, error: error.message }, 'Retrying selectByAttribute') });
   }
 
   async executeKeys(browser, value) {
@@ -153,7 +215,6 @@ class ActionExecutor {
     } else {
       screenshot = await browser.takeScreenshot();
     }
-    // Return base64 string
     return { message: 'Screenshot taken.', screenshot: screenshot.toString('base64') };
   }
 
@@ -164,10 +225,7 @@ class ActionExecutor {
         const readyState = await browser.execute(() => document.readyState);
         return readyState === 'complete';
       },
-      {
-        timeout: 10000,
-        timeoutMsg: 'Page did not load completely',
-      }
+      { timeout: 15000, timeoutMsg: 'Page did not load completely' }
     );
     return { message: `Navigated to '${url}'.` };
   }
@@ -207,8 +265,78 @@ class ActionExecutor {
     return { message: 'Custom script executed.', result };
   }
 
+  async executeMobileTap(browser, action, elementMap) {
+    if (action.elementId) {
+      const el = await this.getElement(browser, action.elementId, elementMap);
+      await el.touchAction('tap');
+    } else if (typeof action.x === 'number' && typeof action.y === 'number') {
+      await browser.touchAction({ action: 'tap', x: action.x, y: action.y });
+    } else {
+      throw new AppError('mobile:tap requires either elementId or x/y coordinates', { code: 'INVALID_PARAMS', status: 400 });
+    }
+    return { message: 'Tap performed.' };
+  }
+
+  async executeMobileSwipe(browser, action) {
+    const { direction, duration = 300, x, y } = action;
+    if (!direction) {
+      throw new AppError('mobile:swipe requires direction (up/down/left/right)', { code: 'INVALID_PARAMS', status: 400 });
+    }
+    const size = await browser.getWindowSize();
+    const startX = x ?? Math.floor(size.width / 2);
+    const startY = y ?? Math.floor(size.height / 2);
+    const distance = Math.floor(Math.min(size.width, size.height) * 0.35);
+
+    let endX = startX, endY = startY;
+    if (direction === 'up') endY = startY - distance;
+    if (direction === 'down') endY = startY + distance;
+    if (direction === 'left') endX = startX - distance;
+    if (direction === 'right') endX = startX + distance;
+
+    await browser.touchPerform([
+      { action: 'press', options: { x: startX, y: startY } },
+      { action: 'wait', options: { ms: duration } },
+      { action: 'moveTo', options: { x: endX, y: endY } },
+      { action: 'release' },
+    ]);
+
+    return { message: `Swipe ${direction} performed.` };
+  }
+
+  async executeMobileScroll(browser, action) {
+    // For native apps, better to use driver specific scrolls; here we emulate by swipe
+    return this.executeMobileSwipe(browser, { direction: action.direction || 'down', duration: action.duration || 300 });
+  }
+
+  async executeMobileBack(browser) {
+    await browser.back();
+    return { message: 'Back navigation performed.' };
+  }
+
+  async executeMobilePressKey(browser, key) {
+    if (!key) throw new AppError('mobile:pressKey requires key', { code: 'INVALID_PARAMS', status: 400 });
+    if (typeof browser.pressKeyCode === 'function') {
+      // Android specific keycode method (UiAutomator2)
+      // Map common keys if needed; here assume numeric or string mapping done by client
+      await browser.pressKeyCode(key);
+    } else {
+      // Fallback to keys
+      await browser.keys(key);
+    }
+    return { message: `Key '${key}' sent.` };
+  }
+
+  async executeMobileHideKeyboard(browser) {
+    if (typeof browser.hideKeyboard === 'function') {
+      await browser.hideKeyboard();
+    } else {
+      // Try common fallbacks
+      await browser.keys('Escape');
+    }
+    return { message: 'Keyboard hidden.' };
+  }
+
   validateAction(action) {
-    // This can be expanded for stricter validation if needed
     return !!action.action;
   }
 }

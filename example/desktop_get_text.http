@@ -1,0 +1,11 @@
+### Get element text
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "getText", "elementId": "label_result" }
+
+### Get attribute
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "getAttribute", "elementId": "input_email", "attribute": "placeholder" }

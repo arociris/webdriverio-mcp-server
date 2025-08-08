@@ -1,0 +1,17 @@
+### Select by visible text
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "selectByVisibleText", "elementId": "select_country", "text": "India" }
+
+### Select by index
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "selectByIndex", "elementId": "select_country", "index": 2 }
+
+### Select by attribute
+POST http://localhost:3000/session/{{sessionId}}/act
+Content-Type: application/json
+
+{ "action": "selectByAttribute", "elementId": "select_country", "attribute": "value", "value": "IN" }
